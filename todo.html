@@ -1,0 +1,97 @@
+<title>Ma liste de la semaine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: une colonne type carnet, tâches groupées par échéance */
+:root{
+  --bg:#f5f6fb; --card:#ffffff; --fg:#1d2033; --muted:#646a85; --line:#dfe2ee;
+  --accent:#4b5bd6; --urgent:#d2453b; --soon:#c98a12; --ok:#2f8f5b;
+  --display:"Fraunces", Georgia, serif; --body:"Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12141f; --card:#1b1e2d; --fg:#e9ebf5; --muted:#9aa0bb; --line:#2c3047;
+  --accent:#8f9bff; --urgent:#ff7a70; --soon:#f0b84a; --ok:#5fd08f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12141f; --card:#1b1e2d; --fg:#e9ebf5; --muted:#9aa0bb; --line:#2c3047;
+  --accent:#8f9bff; --urgent:#ff7a70; --soon:#f0b84a; --ok:#5fd08f; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 48px}
+main{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:6px}
+h1{font-family:var(--display);font-size:2rem;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0}
+.progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.progress span{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+section{display:flex;flex-direction:column;gap:10px}
+h2{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
+ul{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:12px}
+li+li{border-top:1px solid var(--line)}
+label{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;cursor:pointer}
+input[type=checkbox]{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent);flex:none;cursor:pointer}
+input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.name{font-weight:500}
+.note{color:var(--muted);font-size:.9rem}
+.pill{font-size:.75rem;font-weight:600;padding:2px 9px;border-radius:99px;border:1px solid currentColor;white-space:nowrap;flex:none;margin-top:2px}
+.urgent{color:var(--urgent)} .soon{color:var(--soon)} .later{color:var(--muted)}
+li.done .name{text-decoration:line-through;color:var(--muted)}
+li.done .pill{opacity:.4}
+.cheer{color:var(--ok);font-weight:600;margin:0}
+</style>
+
+<main>
+  <header>
+    <h1>Ma liste de la semaine</h1>
+    <p class="sub">Semaine du 23 novembre · <span id="count"></span></p>
+    <div class="progress"><span id="bar"></span></div>
+    <p class="cheer" id="cheer" hidden>Tout est fait, bravo !</p>
+  </header>
+
+  <section>
+    <h2>Demain matin</h2>
+    <ul>
+      <li><label><input type="checkbox" id="eco"><span class="t"><span class="name">Me remettre en ordre en éco</span><span class="note">À faire le matin</span></span><span class="pill urgent">mer. 25</span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Cette semaine</h2>
+    <ul>
+      <li><label><input type="checkbox" id="geo"><span class="t"><span class="name">Devoir de géo : le croquis</span><span class="note">À rendre vendredi</span></span><span class="pill soon">ven. 27</span></label></li>
+      <li><label><input type="checkbox" id="maman"><span class="t"><span class="name">Faire le cadeau pour maman</span></span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Maths</h2>
+    <ul>
+      <li><label><input type="checkbox" id="maths1"><span class="t"><span class="name">Noter ce que je ne comprends pas</span><span class="note">Chapitres et exercices qui posent problème</span></span></label></li>
+      <li><label><input type="checkbox" id="maths2"><span class="t"><span class="name">Demander de l'aide</span><span class="note">Au prof ou à quelqu'un de la classe</span></span></label></li>
+      <li><label><input type="checkbox" id="maths3"><span class="t"><span class="name">Me remettre en ordre en maths</span></span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Avant les examens</h2>
+    <ul>
+      <li><label><input type="checkbox" id="mun"><span class="t"><span class="name">Faire le truc du MUN</span></span><span class="pill later">avant exams</span></label></li>
+      <li><label><input type="checkbox" id="revisions"><span class="t"><span class="name">Commencer à réviser les examens</span><span class="note">Faire un planning par matière</span></span></label></li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const boxes=[...document.querySelectorAll('input[type=checkbox]')];
+let saved={};
+try{saved=JSON.parse(localStorage.getItem('todo-semaine')||'{}')}catch(e){}
+function update(){
+  const done=boxes.filter(b=>b.checked).length;
+  boxes.forEach(b=>b.closest('li').classList.toggle('done',b.checked));
+  document.getElementById('count').textContent=done+' sur '+boxes.length+' fait'+(done>1?'s':'');
+  document.getElementById('bar').style.width=(done/boxes.length*100)+'%';
+  document.getElementById('cheer').hidden=done!==boxes.length;
+  try{localStorage.setItem('todo-semaine',JSON.stringify(Object.fromEntries(boxes.map(b=>[b.id,b.checked]))))}catch(e){}
+}
+boxes.forEach(b=>{b.checked=!!saved[b.id];b.addEventListener('change',update)});
+update();
+</script>
